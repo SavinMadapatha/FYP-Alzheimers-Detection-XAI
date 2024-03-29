@@ -1,0 +1,35 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: left;
+  margin-left: 50px;
+  padding: 20px 0;
+}
+
+.nav-item {
+  margin: 0 15px;
+  text-decoration: none;
+  font-size: larger;
+  color: #fff;
+}
+
+.nav-item.links {
+  margin-top: 4px;
+}
+
+.nav-item.active {
+  color: #00a5ff;
+  font-weight: bolder;
+}
+
+.site-name {
+  font-size: x-large;
+  font-weight: bolder;
+  padding-right: 30px;
+}
+
+.nav-link {
+  padding-top: 4px;
+}
