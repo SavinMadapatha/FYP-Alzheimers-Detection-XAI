@@ -282,10 +282,10 @@ function PredictPage() {
             <Navbar />
             <div className="steps-container">
                 <div className="step-indicator-container">
-                    <div className={`step ${step === 1 ? 'active' : ''}`}>1 Upload MRI</div>
-                    <div className={`step ${step === 2 ? 'active' : ''}`}>2 Preview MRI</div>
-                    <div className={`step ${step === 3 ? 'active' : ''}`}>3 Detection Result</div>
-                    <div className={`step ${step === 4 ? 'active' : ''}`}>4 Visual Interpretations</div>
+                    <div className={`step ${step === 1 ? 'active' : ''}`}>1. Upload MRI</div>
+                    <div className={`step ${step === 2 ? 'active' : ''}`}>2. Preview MRI</div>
+                    <div className={`step ${step === 3 ? 'active' : ''}`}>3. Detection Result</div>
+                    <div className={`step ${step === 4 ? 'active' : ''}`}>4. Visual Interpretations</div>
                 </div>
                 <div className="step-content">
                     {renderStepContent()}

@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 import torch
 from model import (ensemble_model, preprocess_image, predict_with_confidence, 
                    apply_gradcam_AlexNet, apply_gradcam_efficientnet, 
-                   generate_lime_and_highlighted)
+                   generate_lime_and_highlighted, generate_saliency_map)
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__, static_folder='mri_images')
@@ -76,8 +76,8 @@ def generate_interpretations():
         xai_image_urls.append(apply_gradcam_efficientnet(ensemble_model.model2, img_tensor, "SEBlock", image_path))
 
         # Generate LIME explanation images and apend their URLs
-        alex_lime, alex_highlight_lime = generate_lime_and_highlighted(image_path, ensemble_model.model1, "AlexNet", 4)
-        efficient_lime, efficient_highlight_lime = generate_lime_and_highlighted(image_path, ensemble_model.model2, "EfficientNet", 5)
+        alex_lime, alex_highlight_lime = generate_lime_and_highlighted(image_path, ensemble_model.model1, "AlexNet")
+        efficient_lime, efficient_highlight_lime = generate_lime_and_highlighted(image_path, ensemble_model.model2, "EfficientNet")
         # xai_image_urls.append(generate_lime_explanation(image_path, ensemble_model.model1))
         # xai_image_urls.append(generate_lime_explanation(image_path, ensemble_model.model2))
 
@@ -85,6 +85,12 @@ def generate_interpretations():
         xai_image_urls.append(efficient_lime)
         xai_image_urls.append(alex_highlight_lime)
         xai_image_urls.append(efficient_highlight_lime)
+
+        xai_image_urls.append(generate_saliency_map(ensemble_model.model1, img_tensor, image_path, 'AlexNet'))
+        xai_image_urls.append(generate_saliency_map(ensemble_model.model2, img_tensor, image_path, 'EfficientNet'))
+        
+        # xai_image_urls.append(test_lime(ensemble_model.model1, image_path, 'AlexNet'))
+        # xai_image_urls.append(test_lime(ensemble_model.model2, image_path, 'EfficientNet'))
 
         return jsonify(xai_image_urls)
     except Exception as e:

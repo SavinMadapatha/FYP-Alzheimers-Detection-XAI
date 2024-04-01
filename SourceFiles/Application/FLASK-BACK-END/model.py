@@ -7,7 +7,6 @@ import torchvision.transforms as transforms
 from PIL import Image, ImageFilter, ImageOps
 import torchvision.models as models
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 from gradcam.utils import visualize_cam
 from gradcam import GradCAM
@@ -19,6 +18,12 @@ from lime import lime_image
 from skimage.segmentation import mark_boundaries
 from skimage.color import gray2rgb, label2rgb
 from skimage import img_as_ubyte
+from skimage import img_as_float
+import shap
+from captum.attr import visualization as viz
+import matplotlib
+matplotlib.use('Agg')  
+import matplotlib.pyplot as plt
 
 class ContrastStretching:
     def __call__(self, img):
@@ -200,10 +205,9 @@ class VotingEnsemble(nn.Module):
         prob1 = F.softmax(output1, dim=1)
         prob2 = F.softmax(output2, dim=1)
 
-        # Average the probabilities
-        avg_probs = (prob1 + prob2) / 2
+        probs = prob1 + prob2 
 
-        return avg_probs
+        return probs
 
 
 model1.eval()
@@ -229,7 +233,7 @@ def load_image(image_path):
 def predict_with_confidence(image):
     ensemble_model.eval()
     with torch.no_grad():
-        outputs = model1(image)
+        outputs = ensemble_model(image)
         probabilities = torch.nn.functional.softmax(outputs, dim=1)
         predicted = torch.max(probabilities, 1)[1].item()
         confidence = torch.max(probabilities, 1)[0].item()
@@ -249,7 +253,7 @@ def apply_gradcam_AlexNet(model, image_tensor, target_layer, image_path):
             result_image = to_pil_image(result.cpu())
 
         filename = os.path.basename(image_path)
-        cam_image_filename = filename.replace('.jpg', '_cam.jpg')
+        cam_image_filename = filename.replace('.jpg', '_AlexNet_gradcam.jpg')
         cam_image_path = os.path.join(current_app.static_folder, cam_image_filename)
         result_image.save(cam_image_path)
 
@@ -331,8 +335,7 @@ def model_prediction(model, image_tensor):
         probabilities = torch.nn.functional.softmax(logits, dim=1)
         return probabilities.cpu().numpy()
 
-
-def apply_mask(np_image, mask, color=[0, 255, 0]):
+def apply_highlight(np_image, mask, color=[0, 255, 0]):
     """Applies a mask to the image with the specified highlight color."""
     if np_image.ndim == 2 or np_image.shape[2] == 1:
         np_image = gray2rgb(np_image)
@@ -346,36 +349,64 @@ def apply_mask(np_image, mask, color=[0, 255, 0]):
     highlighted_image = np.where(colored_mask, colored_mask, np_image)
     return highlighted_image
 
-def save_image(image_array, path):
-    """Save the image array to a file"""
-    plt.imsave(path, image_array)
+def generate_lime_and_highlighted(image_path, model, model_name):
+    # Initialize LIME Image Explainer
+    explainer = lime_image.LimeImageExplainer()
 
-
-def generate_lime_and_highlighted(image_path, model, model_name, features):
-    explainer = lime_image.LimeImageExplainer() 
-
-    filename = os.path.basename(image_path)
-    filename_without_ext = os.path.splitext(filename)[0]
-
+    # Load and preprocess the image
     image = Image.open(image_path).convert('RGB')
-    np_image = np.array(image) / 255.0
+    np_image = np.array(image) / 255.0 
 
     def batch_predict(images):
-        image_tensors = torch.stack([preprocess_transform(Image.fromarray(img.astype('uint8'))) for img in images])
-        return model_prediction(model, image_tensors) 
+        image_tensors = torch.stack([preprocess_transform(Image.fromarray(img.astype(np.uint8))) for img in images])
+        return model_prediction(model, image_tensors)
 
     explanation = explainer.explain_instance(np_image, batch_predict, top_labels=5, hide_color=0, num_samples=1000)
 
-    temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=True, num_features=features, hide_rest=False)
+    temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=True, num_features=3, hide_rest=False)
 
-    img_boundaries = mark_boundaries(temp, mask)
-    boundaries_filename = f"{filename_without_ext}_{model_name}_lime_boundaries.jpg"
-    boundaries_path = os.path.join(current_app.static_folder, boundaries_filename)
-    plt.imsave(boundaries_path, img_as_ubyte(img_boundaries))
+    highlighted_image = apply_highlight(np_image, mask)
 
-    highlighted_image = apply_mask(np_image, mask, color=[0, 255, 0])
-    highlighted_filename = f"{filename_without_ext}_{model_name}_lime_highlighted.jpg"
-    highlighted_path = os.path.join(current_app.static_folder, highlighted_filename)
+    boundaries_path = os.path.join(current_app.static_folder, f"{model_name}_lime_boundaries.jpg")
+    plt.imsave(boundaries_path, img_as_ubyte(mark_boundaries(temp, mask)))
+
+    highlighted_path = os.path.join(current_app.static_folder, f"{model_name}_lime_highlighted.jpg")
     plt.imsave(highlighted_path, img_as_ubyte(highlighted_image))
 
-    return f'/mri_images/{boundaries_filename}', f'/mri_images/{highlighted_filename}'
+    return f'/mri_images/{os.path.basename(boundaries_path)}', f'/mri_images/{os.path.basename(highlighted_path)}'
+
+
+def generate_saliency_map(model, image_tensor, image_path, model_name, target_class=None, alpha=0.5):
+    model.eval()  # Set the model to evaluation mode
+    image_tensor.requires_grad = True
+
+    if target_class is None:
+        output = model(image_tensor)
+        target_class = output.argmax(dim=1).item()
+
+    output = model(image_tensor)
+    model.zero_grad()
+    one_hot_output = torch.FloatTensor(1, output.size()[-1]).zero_()
+    one_hot_output[0][target_class] = 1
+    output.backward(gradient=one_hot_output)
+
+    # Compute saliency map
+    saliency = image_tensor.grad.data.abs().squeeze().cpu().numpy()
+    saliency = np.max(saliency, axis=0)
+    saliency = (saliency - np.min(saliency)) / (np.max(saliency) - np.min(saliency))
+    saliency_colored = cv2.applyColorMap(np.uint8(255 * saliency), cv2.COLORMAP_HOT)
+
+    # Convert saliency map to PIL image and resize to match the original image size
+    saliency_img = Image.fromarray(saliency_colored).resize(image_tensor.squeeze(0).shape[1:][::-1], Image.LANCZOS)
+
+    # Blend the original image with the saliency map
+    original_img = to_pil_image(image_tensor.squeeze(0).cpu())
+    blended_img = Image.blend(original_img.convert("RGBA"), saliency_img.convert("RGBA"), alpha=alpha)
+
+    # Save the blended image
+    output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}_{model_name}_saliency_highlighted.png"
+    output_path = os.path.join(os.path.dirname(image_path), output_filename)
+    blended_img.save(output_path)
+
+    # Return the web-accessible path
+    return f'/mri_images/{output_filename}'

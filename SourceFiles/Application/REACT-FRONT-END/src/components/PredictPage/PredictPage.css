@@ -1,7 +1,7 @@
 .predict-container {
   font-family: "Arial", sans-serif;
-  background-color: #a8d0e6;
-  color: #333;
+  background-color: #f7f7f7;
+  color: rgb(0, 0, 0);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -18,7 +18,7 @@
   height: 450px;
   padding: 2rem;
   background-color: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   border-radius: 0.5rem;
   overflow: hidden;
 }
@@ -47,7 +47,7 @@
   text-align: center;
   padding: 0.5rem 0;
   font-size: 1.125rem;
-  color: #64748b;
+  color: #717171;
   border-bottom: 2px solid #e2e8f0;
 }
 
@@ -131,6 +131,8 @@ progress {
 }
 
 .btn {
+  font-size: small;
+  font-weight: bold;
   padding: 0.5rem 1rem;
   background-color: #00a5ff;
   color: #ffffff;
@@ -152,7 +154,7 @@ progress {
 }
 
 .btn:hover {
-  background-color: #1e40af;
+  background-color: #0089d2;
 }
 
 .btn:last-child {
@@ -364,7 +366,7 @@ progress::-moz-progress-bar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border-left-color: #09f;
+  border-left-color: #00a5ff;
   animation: spin 1s infinite linear;
 }
 

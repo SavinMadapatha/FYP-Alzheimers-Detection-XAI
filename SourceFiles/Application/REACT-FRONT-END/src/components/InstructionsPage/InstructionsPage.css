@@ -1,7 +1,7 @@
 .instructions-container {
   font-family: Arial, sans-serif;
-  background-color: #a8d0e6;
-  color: #fff;
+  background-color: #f7f7f7;
+  color: rgb(0, 0, 0);
   min-height: 100vh;
   display: flex;
   position: relative;

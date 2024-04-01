@@ -1,7 +1,7 @@
 .home-container {
   font-family: Arial, sans-serif;
-  background-color: #a8d0e6;
-  color: #fff;
+  background-color: #f7f7f7;
+  color: rgb(0, 0, 0);
   text-shadow: black;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   min-height: 100vh;
@@ -36,7 +36,7 @@
 .divider {
   height: 100%;
   width: 2px;
-  background-color: #fff;
+  background-color: rgb(0, 0, 0);
 }
 
 .button-container {
@@ -53,7 +53,7 @@
   background-color: transparent;
   border: 3px solid #00a5ff;
   border-radius: 20px;
-  color: #fff;
+  color: rgb(0, 0, 0);
   cursor: pointer;
   font-size: xx-large;
   font-weight: bolder;
@@ -62,4 +62,5 @@
 
 .get-started-btn:hover {
   background-color: #00a5ff;
+  color: white;
 }
