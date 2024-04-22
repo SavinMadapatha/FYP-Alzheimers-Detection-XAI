@@ -23,4 +23,4 @@ Alzheimer’s disease is a debilitating neurodegenerative disorder that affects 
 - Python 
 - PyCharm 
 - Flask 
-- HTML, CSS, JavaScript
+- React, HTML, CSS,
