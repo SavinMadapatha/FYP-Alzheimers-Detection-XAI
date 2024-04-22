@@ -1,0 +1,42 @@
+.instructions-container {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  color: rgb(0, 0, 0);
+  min-height: 100vh;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.instructions-content {
+  margin-top: 20px;
+  margin-left: 140px;
+  margin-right: 140px;
+  font-weight: bold;
+}
+
+.instructions-container h1 {
+  font-weight: bolder;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.instructions-list,
+.predict-steps {
+  list-style-position: outside;
+  margin-left: 0;
+  padding-left: 1em;
+  line-height: 1.6;
+}
+
+.list {
+  font-size: 20px;
+  margin-bottom: 0.5em;
+}
+
+.predict-steps {
+  padding-left: 20px;
+}
